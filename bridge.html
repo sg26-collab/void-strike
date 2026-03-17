@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Bridge</title>
+  <style>
+    /* ── RESET & BASE ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f5f0e8;
+      color: #222;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 18px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    h1 { font-size: 2.4rem; margin-bottom: .6rem; }
+    h2 { font-size: 1.8rem; margin-bottom: .5rem; }
+    h3 { font-size: 1.35rem; margin-bottom: .4rem; }
+    p  { margin-bottom: .9rem; }
+    ul, ol { margin: .4rem 0 .9rem 1.6rem; }
+    li { margin-bottom: .25rem; }
+
+    button {
+      font-family: Georgia, serif;
+      font-size: 1.1rem;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    button:hover  { opacity: .88; }
+    button:active { transform: scale(.97); }
+
+    .btn-primary   { background: #2c5f8a; color: #fff; }
+    .btn-secondary { background: #6b8e6b; color: #fff; }
+    .btn-outline   { background: transparent; color: #2c5f8a; border: 2px solid #2c5f8a; }
+    .btn-sm        { font-size: .95rem; padding: 7px 18px; }
+    button:disabled { opacity: .4; cursor: default; }
+
+    /* ── NAV BAR ───────────────────────────────────────────────── */
+    #nav {
+      display: none;
+      background: #2c5f8a;
+      color: #fff;
+      padding: 10px 24px;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      font-size: 1rem;
+    }
+    #nav.visible { display: flex; }
+    #nav button  { background: rgba(255,255,255,.18); color: #fff; padding: 6px 16px; font-size: .95rem; border-radius: 6px; }
+    #nav button:hover { background: rgba(255,255,255,.32); opacity: 1; }
+    #nav .nav-progress { margin-left: auto; font-size: .95rem; white-space: nowrap; }
+
+    /* ── VIEWS ─────────────────────────────────────────────────── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── HOME ──────────────────────────────────────────────────── */
+    #view-home {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 60px 28px 40px;
+      text-align: center;
+    }
+    #view-home .subtitle {
+      font-size: 1.2rem;
+      color: #555;
+      margin-bottom: 2rem;
+    }
+    #view-home .home-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 2.5rem; }
+
+    /* progress bar */
+    .progress-bar-wrap { background: #ddd; border-radius: 8px; height: 16px; overflow: hidden; margin: .5rem 0 .3rem; }
+    .progress-bar-fill { background: #2c5f8a; height: 100%; border-radius: 8px; transition: width .4s; }
+    .progress-label    { font-size: .95rem; color: #555; }
+
+    /* ── LESSON LIST ───────────────────────────────────────────── */
+    #view-lessons {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+    #view-lessons h1 { margin-bottom: 1.4rem; }
+
+    .module-group   { margin-bottom: 1.5rem; }
+    .module-heading { font-size: 1rem; font-weight: bold; text-transform: uppercase;
+                      letter-spacing: .08em; color: #555; margin-bottom: .5rem; }
+
+    .lesson-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .lesson-row:hover           { border-color: #2c5f8a; box-shadow: 0 2px 8px rgba(44,95,138,.15); }
+    .lesson-row.locked          { opacity: .45; cursor: default; }
+    .lesson-row.locked:hover    { border-color: transparent; box-shadow: none; }
+    .lesson-row.done            { border-color: #2a7a2a; }
+
+    .lesson-num  { font-size: .9rem; color: #888; min-width: 28px; }
+    .lesson-title-text { flex: 1; font-size: 1.05rem; }
+    .check-icon  { font-size: 1.3rem; color: #2a7a2a; }
+    .lock-icon   { font-size: 1.1rem; color: #aaa; }
+
+    /* ── LESSON VIEW ───────────────────────────────────────────── */
+    #view-lesson {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+    .lesson-header {
+      margin-bottom: 1.6rem;
+      border-bottom: 2px solid #d4c9b2;
+      padding-bottom: .8rem;
+    }
+    .lesson-module-label { font-size: .95rem; color: #888; text-transform: uppercase; letter-spacing: .07em; }
+    .lesson-title        { font-size: 2rem; margin: .2rem 0; }
+    .page-indicator      { font-size: .9rem; color: #888; }
+
+    .page-content   { min-height: 220px; margin-bottom: 1.8rem; }
+    .page-heading   { font-size: 1.5rem; margin-bottom: .8rem; color: #2c5f8a; }
+    .page-body      { font-size: 1.1rem; }
+    .page-visual    { margin: 1.2rem 0; }
+
+    .lesson-nav {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .lesson-nav .spacer { flex: 1; }
+
+    /* ── EXERCISE VIEW ─────────────────────────────────────────── */
+    #view-exercise {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+    .exercise-header { margin-bottom: 1.4rem; }
+    .exercise-title  { font-size: 1.6rem; margin-bottom: .3rem; }
+    .exercise-prompt { font-size: 1.05rem; color: #444; }
+
+    #exercise-area   { min-height: 200px; }
+
+    /* ── RESULTS VIEW ──────────────────────────────────────────── */
+    #view-results {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px 60px;
+      text-align: center;
+    }
+    .result-icon    { font-size: 4rem; margin-bottom: .6rem; }
+    .result-heading { font-size: 1.8rem; margin-bottom: .8rem; }
+    .result-explain { font-size: 1.05rem; background: #fff; border-radius: 10px;
+                      padding: 18px 24px; margin: 1.2rem 0 2rem; text-align: left; line-height: 1.7; }
+    .result-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── CARDS ─────────────────────────────────────────────────── */
+    .card {
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #fff;
+      border: 2px solid #bbb;
+      border-radius: 8px;
+      padding: 5px 7px;
+      font-family: Georgia, serif;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      transition: transform .12s, box-shadow .12s, border-color .12s;
+    }
+    .card:hover     { transform: translateY(-6px); box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+    .card.selected  { border-color: #2c5f8a; box-shadow: 0 0 0 3px rgba(44,95,138,.35); transform: translateY(-8px); }
+    .card.correct   { border-color: #2a7a2a; background: #f0fff0; }
+    .card.wrong     { border-color: #b22222; background: #fff5f5; }
+    .card.no-hover  { cursor: default; }
+    .card.no-hover:hover { transform: none; box-shadow: none; }
+
+    .card.red  { color: #cc2200; }
+    .card.black{ color: #111; }
+
+    /* Large card (default for hand) */
+    .card-lg { width: 72px; height: 108px; font-size: 1rem; padding: 5px 8px; }
+    .card-lg .card-corner       { font-size: 1rem; line-height: 1.15; }
+    .card-lg .card-center-suit  { font-size: 2rem; text-align: center; }
+    .card-lg .card-corner-bot   { transform: rotate(180deg); font-size: 1rem; line-height: 1.15; align-self: flex-end; }
+
+    /* Small card */
+    .card-sm { width: 52px; height: 76px; font-size: .82rem; padding: 3px 5px; }
+    .card-sm .card-corner      { font-size: .82rem; line-height: 1.1; }
+    .card-sm .card-center-suit { font-size: 1.4rem; text-align: center; }
+    .card-sm .card-corner-bot  { transform: rotate(180deg); font-size: .82rem; line-height: 1.1; align-self: flex-end; }
+
+    /* Face-down back */
+    .card.back {
+      background: repeating-linear-gradient(
+        45deg,
+        #2c5f8a,
+        #2c5f8a 4px,
+        #1a3d5c 4px,
+        #1a3d5c 10px
+      );
+      border-color: #1a3d5c;
+    }
+
+    .hand {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 1rem 0;
+      align-items: flex-end;
+    }
+    .hand-label { font-size: .95rem; color: #666; margin-bottom: .3rem; }
+
+    /* ── TABLE DIAGRAM ─────────────────────────────────────────── */
+    .table-diagram {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 8px;
+      max-width: 360px;
+      margin: 1.2rem auto;
+    }
+    .table-felt {
+      grid-column: 1 / 4;
+      grid-row: 1 / 4;
+      background: #2d6a4f;
+      border-radius: 50%;
+      aspect-ratio: 1;
+      position: relative;
+      z-index: 0;
+    }
+    .table-seat {
+      z-index: 1;
+      text-align: center;
+      font-size: .95rem;
+      font-weight: bold;
+    }
+    .seat-n { grid-column: 2; grid-row: 1; align-self: start; }
+    .seat-s { grid-column: 2; grid-row: 3; align-self: end; }
+    .seat-w { grid-column: 1; grid-row: 2; align-self: center; justify-self: start; }
+    .seat-e { grid-column: 3; grid-row: 2; align-self: center; justify-self: end; }
+
+    /* Simpler partnership layout */
+    .partnership-diagram {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin: 1.2rem 0;
+      flex-wrap: wrap;
+    }
+    .partner-box {
+      background: #fff;
+      border: 2px solid #d4c9b2;
+      border-radius: 10px;
+      padding: 14px 22px;
+      text-align: center;
+      min-width: 100px;
+    }
+    .partner-box.you     { border-color: #2c5f8a; }
+    .partner-box.partner { border-color: #2a7a2a; }
+    .partner-box .seat-label { font-size: 1.4rem; font-weight: bold; }
+    .partner-box .seat-name  { font-size: .9rem; color: #666; }
+
+    /* ── QUIZ / PUZZLE UI ──────────────────────────────────────── */
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; margin: 1rem 0; }
+    .quiz-option  {
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 12px 18px;
+      text-align: left;
+      font-size: 1.05rem;
+      transition: border-color .12s, background .12s;
+    }
+    .quiz-option:hover            { border-color: #2c5f8a; background: #f0f6ff; }
+    .quiz-option.correct-answer   { border-color: #2a7a2a; background: #f0fff0; color: #1a5a1a; }
+    .quiz-option.wrong-answer     { border-color: #b22222; background: #fff5f5; color: #8b0000; }
+    .quiz-option:disabled         { cursor: default; }
+    .quiz-option:disabled:hover   { border-color: #ccc; background: #fff; }
+
+    .quiz-feedback {
+      margin-top: 1rem;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 1.05rem;
+    }
+    .quiz-feedback.correct { background: #e6f9e6; color: #1a5a1a; border: 1px solid #2a7a2a; }
+    .quiz-feedback.wrong   { background: #fff0f0; color: #8b0000; border: 1px solid #b22222; }
+
+    /* HCP counter */
+    .hcp-area { margin: 1rem 0; }
+    .hcp-score-display {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2c5f8a;
+      margin: .8rem 0;
+    }
+    .hcp-hint { font-size: .95rem; color: #555; margin-bottom: .6rem; }
+
+    /* Bid widget */
+    .bid-widget { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+    .bid-select {
+      font-family: Georgia, serif;
+      font-size: 1.1rem;
+      padding: 8px 14px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .bid-select:focus { outline: none; border-color: #2c5f8a; }
+
+    .bid-display {
+      background: #fff;
+      border: 2px solid #d4c9b2;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 1.1rem;
+      min-width: 80px;
+      text-align: center;
+    }
+    .bid-red  { color: #cc2200; }
+    .bid-black { color: #111; }
+
+    /* Auction table */
+    .auction-table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 1rem;
+    }
+    .auction-table th {
+      background: #2c5f8a;
+      color: #fff;
+      padding: 6px 20px;
+      border: 1px solid #1a3d5c;
+    }
+    .auction-table td {
+      padding: 6px 20px;
+      border: 1px solid #ddd;
+      text-align: center;
+      background: #fff;
+      min-width: 70px;
+    }
+    .auction-table .bid-red  { color: #cc2200; font-weight: bold; }
+    .auction-table .bid-black{ color: #111;    font-weight: bold; }
+    .auction-table .highlight-cell { background: #fff9cc; }
+
+    /* Trick display */
+    .trick-area {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .trick-slot { text-align: center; }
+    .trick-slot .slot-label { font-size: .85rem; color: #666; margin-bottom: 4px; }
+
+    /* Suit colors inline */
+    .suit-s, .suit-c { color: #111; }
+    .suit-h, .suit-d { color: #cc2200; }
+
+    /* Info box */
+    .info-box {
+      background: #fff;
+      border-left: 4px solid #2c5f8a;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+      margin: 1rem 0;
+      font-size: 1.05rem;
+    }
+    .info-box.tip    { border-color: #2a7a2a; background: #f5fff5; }
+    .info-box.warn   { border-color: #cc8800; background: #fffbf0; }
+
+    /* Rank table */
+    .rank-table {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: .8rem 0;
+      align-items: center;
+    }
+    .rank-badge {
+      background: #fff;
+      border: 2px solid #bbb;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 1.05rem;
+      font-weight: bold;
+    }
+    .rank-arrow { color: #888; font-size: 1.2rem; }
+
+    /* Sequential step */
+    .step-log { margin: .8rem 0; }
+    .step-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      animation: fadeIn .3s;
+    }
+    .step-item.highlight { background: #fff9cc; border-color: #cc8800; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    /* ── RESPONSIVE ────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+      body { font-size: 16px; }
+      h1 { font-size: 1.9rem; }
+      .card-lg { width: 60px; height: 90px; }
+      #view-home { padding: 36px 16px 28px; }
+      #view-lesson, #view-exercise, #view-lessons, #view-results { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV BAR ─────────────────────────────────────────────────── -->
+<nav id="nav">
+  <button onclick="showView('home')">Home</button>
+  <button onclick="showView('lessons')">Lessons</button>
+  <span class="nav-progress" id="nav-progress">0 / 13 complete</span>
+</nav>
+
+<!-- ── HOME ────────────────────────────────────────────────────── -->
+<div id="view-home" class="view active">
+  <h1>♠ Learn Bridge ♥</h1>
+  <p class="subtitle">A gentle, step-by-step guide to the world's greatest card game</p>
+  <div class="home-buttons">
+    <button class="btn-primary" onclick="handleStart()">Start Learning</button>
+    <button class="btn-secondary" id="btn-continue" onclick="handleContinue()" style="display:none">Continue</button>
+  </div>
+  <div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="home-progress-fill" style="width:0%"></div></div>
+    <p class="progress-label" id="home-progress-label">0 of 13 lessons complete</p>
+  </div>
+  <p style="margin-top:2.5rem; font-size:1rem; color:#777;">No account needed — your progress is saved automatically in your browser.</p>
+</div>
+
+<!-- ── LESSONS LIST ─────────────────────────────────────────────── -->
+<div id="view-lessons" class="view">
+  <h1>Lessons</h1>
+  <div id="lesson-list"></div>
+</div>
+
+<!-- ── LESSON VIEW ──────────────────────────────────────────────── -->
+<div id="view-lesson" class="view">
+  <div class="lesson-header">
+    <div class="lesson-module-label" id="lesson-module-label"></div>
+    <div class="lesson-title" id="lesson-title-el"></div>
+    <div class="page-indicator" id="page-indicator"></div>
+  </div>
+  <div class="page-content" id="page-content"></div>
+  <div class="lesson-nav">
+    <button class="btn-outline btn-sm" id="btn-prev" onclick="prevPage()">← Back</button>
+    <span class="spacer"></span>
+    <button class="btn-primary" id="btn-next" onclick="nextPage()">Next →</button>
+  </div>
+</div>
+
+<!-- ── EXERCISE VIEW ────────────────────────────────────────────── -->
+<div id="view-exercise" class="view">
+  <div class="exercise-header">
+    <div class="exercise-title" id="exercise-title"></div>
+    <div class="exercise-prompt" id="exercise-prompt"></div>
+  </div>
+  <div id="exercise-area"></div>
+</div>
+
+<!-- ── RESULTS VIEW ─────────────────────────────────────────────── -->
+<div id="view-results" class="view">
+  <div class="result-icon" id="result-icon"></div>
+  <div class="result-heading" id="result-heading"></div>
+  <div class="result-explain" id="result-explain"></div>
+  <div class="result-buttons" id="result-buttons"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════════════════════════
+const SUITS = {
+  S: { sym: '♠', name: 'Spades',   cls: 'black' },
+  H: { sym: '♥', name: 'Hearts',   cls: 'red'   },
+  D: { sym: '♦', name: 'Diamonds', cls: 'red'   },
+  C: { sym: '♣', name: 'Clubs',    cls: 'black' },
+};
+const SUIT_ORDER = ['S','H','D','C']; // highest to lowest for bridge
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_ORDER = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
+const HCP_TABLE  = { A:4, K:3, Q:2, J:1 };
+const STRAIN_SYM = { C:'♣', D:'♦', H:'♥', S:'♠', NT:'NT' };
+const STRAIN_CLS = { C:'bid-black', D:'bid-red', H:'bid-red', S:'bid-black', NT:'bid-black' };
+
+// ════════════════════════════════════════════════════════════════════
+// CARD UTILS
+// ════════════════════════════════════════════════════════════════════
+function makeCard(rank, suit) { return { rank, suit }; }
+
+function renderCard(card, opts = {}) {
+  if (!card) return '';
+  const { rank, suit } = card;
+  const s = SUITS[suit];
+  const sizeClass = opts.sm ? 'card-sm' : 'card-lg';
+  const extra = [sizeClass];
+  if (opts.back)     extra.push('back');
+  else               extra.push(s.cls);
+  if (opts.selected) extra.push('selected');
+  if (opts.correct)  extra.push('correct');
+  if (opts.wrong)    extra.push('wrong');
+  if (opts.noHover)  extra.push('no-hover');
+  const id   = opts.id   ? `id="${opts.id}"` : '';
+  const onclick = opts.onclick ? `onclick="${opts.onclick}"` : '';
+  if (opts.back) {
+    return `<div ${id} class="card ${extra.join(' ')}" ${onclick}></div>`;
+  }
+  return `<div ${id} class="card ${extra.join(' ')}" ${onclick}>
+    <div class="card-corner">${rank}<br>${s.sym}</div>
+    <div class="card-center-suit">${s.sym}</div>
+    <div class="card-corner-bot">${rank}<br>${s.sym}</div>
+  </div>`;
+}
+
+function renderHand(cards, opts = {}) {
+  return `<div class="hand">${cards.map((c, i) => {
+    const o = Object.assign({}, opts, opts.perCard ? opts.perCard(c, i) : {});
+    return renderCard(c, o);
+  }).join('')}</div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// LESSON DATA
+// ════════════════════════════════════════════════════════════════════
+const LESSONS = [
+  // ── 1 ─────────────────────────────────────────────────────────────
+  {
+    id: 1, module: 'The Cards', title: 'The Deck and Suits',
+    pages: [
+      {
+        type: 'info',
+        heading: 'A Standard Deck',
+        body: `<p>Bridge uses a normal deck of 52 playing cards — the same deck you'd use for any card game.</p>
+               <p>The deck is divided into four <strong>suits</strong>. Each suit has 13 cards.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'The Four Suits',
+        body: `<p>The four suits are:</p>
+               <div style="display:flex;gap:24px;flex-wrap:wrap;margin:.8rem 0;">
+                 <div style="text-align:center"><span style="font-size:2.5rem;color:#111">♠</span><br><strong>Spades</strong></div>
+                 <div style="text-align:center"><span style="font-size:2.5rem;color:#cc2200">♥</span><br><strong>Hearts</strong></div>
+                 <div style="text-align:center"><span style="font-size:2.5rem;color:#cc2200">♦</span><br><strong>Diamonds</strong></div>
+                 <div style="text-align:center"><span style="font-size:2.5rem;color:#111">♣</span><br><strong>Clubs</strong></div>
+               </div>
+               <p><strong>Spades</strong> and <strong>Clubs</strong> are black. <strong>Hearts</strong> and <strong>Diamonds</strong> are red.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'Each Suit Has 13 Cards',
+        body: `<p>Every suit contains these 13 cards:</p>
+               <p style="font-size:1.1rem">A &nbsp; K &nbsp; Q &nbsp; J &nbsp; 10 &nbsp; 9 &nbsp; 8 &nbsp; 7 &nbsp; 6 &nbsp; 5 &nbsp; 4 &nbsp; 3 &nbsp; 2</p>
+               <p>Ace (A) is the <em>highest</em>. Two (2) is the <em>lowest</em>.</p>
+               <div class="info-box tip">In bridge, <strong>4 × 13 = 52 cards</strong> are dealt equally among four players — 13 cards each.</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p01',
+        heading: 'Quick Check',
+        body: 'Let\'s make sure you have the suits down.',
+      },
+    ],
+  },
+
+  // ── 2 ─────────────────────────────────────────────────────────────
+  {
+    id: 2, module: 'The Cards', title: 'Card Rankings',
+    pages: [
+      {
+        type: 'info',
+        heading: 'High Cards and Low Cards',
+        body: `<p>Within each suit, the cards are ranked from <strong>highest to lowest</strong>:</p>
+               <div class="rank-table">
+                 <span class="rank-badge">A</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">K</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">Q</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">J</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">10</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">9</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">8</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">7</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">6</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">5</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">4</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">3</span><span class="rank-arrow">›</span>
+                 <span class="rank-badge">2</span>
+               </div>
+               <p>A beats K, K beats Q, and so on. The <strong>Ace is always highest</strong>.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'Honor Cards',
+        body: `<p>The top four cards in each suit — <strong>A, K, Q, J</strong> — are called <strong>honor cards</strong> (or "honors").</p>
+               <p>The <strong>Ten (10)</strong> is sometimes considered an honor too, especially when counting hand strength.</p>
+               <div class="info-box">All other cards (9 down to 2) are called <strong>spot cards</strong> or small cards.</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p02',
+        heading: 'Order the Cards',
+        body: 'Can you put these cards in order from lowest to highest?',
+      },
+      {
+        type: 'puzzle', puzzleId: 'p03',
+        heading: 'Which Card Wins?',
+        body: 'Three cards of the same suit are played. Click the one that wins.',
+      },
+    ],
+  },
+
+  // ── 3 ─────────────────────────────────────────────────────────────
+  {
+    id: 3, module: 'Tricks', title: 'How a Trick Works',
+    pages: [
+      {
+        type: 'info',
+        heading: 'The Four Players',
+        body: `<p>Bridge is played by <strong>four players</strong> seated at a table, referred to by compass directions.</p>
+               <div class="partnership-diagram">
+                 <div class="partner-box"><div class="seat-label">N</div><div class="seat-name">North</div></div>
+                 <div class="partner-box"><div class="seat-label">W</div><div class="seat-name">West</div></div>
+                 <div class="partner-box"><div class="seat-label">E</div><div class="seat-name">East</div></div>
+                 <div class="partner-box"><div class="seat-label">S</div><div class="seat-name">South</div></div>
+               </div>
+               <p>North–South are partners. East–West are partners.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'Playing a Trick',
+        body: `<p>A <strong>trick</strong> is one round of play where each player contributes one card — four cards total.</p>
+               <ol>
+                 <li>One player <strong>leads</strong> (plays first). Any card from their hand.</li>
+                 <li>Play continues clockwise — West, North, East (or any order going around).</li>
+                 <li>The player who plays the <strong>highest card of the suit that was led</strong> wins the trick.</li>
+                 <li>The winner leads the next trick.</li>
+               </ol>`,
+      },
+      {
+        type: 'info',
+        heading: 'A Simple Example',
+        body: `<p>Suppose Spades are led and these cards are played:</p>
+               <div class="trick-area">
+                 <div class="trick-slot"><div class="slot-label">N leads</div>${renderCard({rank:'7',suit:'S'},{noHover:true})}</div>
+                 <div class="trick-slot"><div class="slot-label">E plays</div>${renderCard({rank:'K',suit:'S'},{noHover:true})}</div>
+                 <div class="trick-slot"><div class="slot-label">S plays</div>${renderCard({rank:'3',suit:'S'},{noHover:true})}</div>
+                 <div class="trick-slot"><div class="slot-label">W plays</div>${renderCard({rank:'9',suit:'S'},{noHover:true})}</div>
+               </div>
+               <p><strong>East wins</strong> — the King (K) is the highest spade played.</p>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p04',
+        heading: 'Who Wins the Trick?',
+        body: 'Four cards are played. Click the card that wins the trick.',
+      },
+    ],
+  },
+
+  // ── 4 ─────────────────────────────────────────────────────────────
+  {
+    id: 4, module: 'Tricks', title: 'Following Suit & Discarding',
+    pages: [
+      {
+        type: 'info',
+        heading: 'The Most Important Rule',
+        body: `<p>When a card is led, every other player <strong>must follow suit</strong> — they must play a card of the same suit if they have one.</p>
+               <div class="info-box warn"><strong>You cannot play a different suit if you still have cards in the suit that was led.</strong></div>
+               <p>This is called <strong>following suit</strong>.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'What If You Have No Cards in That Suit?',
+        body: `<p>If you have <strong>no cards</strong> in the suit that was led, you may play <em>any</em> card you like. This is called a <strong>discard</strong>.</p>
+               <p>A discarded card <strong>cannot win the trick</strong> (unless it's a trump — we'll cover that in Lesson 5).</p>
+               <div class="info-box tip">Being "void" in a suit (having none of it) can actually be a big advantage in bridge!</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p05',
+        heading: 'Must You Follow Suit?',
+        body: 'Diamonds are led. Look at your hand and decide what you must do.',
+      },
+      {
+        type: 'puzzle', puzzleId: 'p06',
+        heading: 'Pick the Right Card',
+        body: 'A Heart is led. Click the card you are required to play.',
+      },
+    ],
+  },
+
+  // ── 5 ─────────────────────────────────────────────────────────────
+  {
+    id: 5, module: 'Trump', title: 'Trump Suits',
+    pages: [
+      {
+        type: 'info',
+        heading: 'What Is a Trump Suit?',
+        body: `<p>In bridge, one suit can be designated the <strong>trump suit</strong>. Trump cards have special power:</p>
+               <div class="info-box"><strong>Any trump card beats any non-trump card</strong>, no matter how high the non-trump card is.</div>
+               <p>For example, if Spades are trumps, the 2♠ beats the A♥.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'When Can You Play a Trump?',
+        body: `<p>You may only play a trump card when you have <strong>no cards left in the suit that was led</strong>.</p>
+               <p>When you play a trump instead of following suit, it is called <strong>ruffing</strong> (or "trumping").</p>
+               <p>If two players both play trumps, the <strong>higher trump wins</strong>.</p>
+               <div class="info-box tip">You can also play a trump when you are on lead — you may lead any card including a trump.</div>`,
+      },
+      {
+        type: 'info',
+        heading: 'No Trumps',
+        body: `<p>Sometimes there is <strong>no trump suit</strong>. This is called <strong>No Trumps (NT)</strong>. Every trick is won purely by the highest card in the suit that was led.</p>
+               <p>No Trumps is a perfectly valid (and common) choice in bridge.</p>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p07',
+        heading: 'Who Wins with Trumps?',
+        body: 'Spades are the trump suit. Click the card that wins this trick.',
+      },
+    ],
+  },
+
+  // ── 6 ─────────────────────────────────────────────────────────────
+  {
+    id: 6, module: 'Partnerships', title: 'You and Your Partner',
+    pages: [
+      {
+        type: 'info',
+        heading: 'Bridge Is a Team Game',
+        body: `<p>Bridge is played in <strong>partnerships</strong>. You and the player across the table are always on the same team.</p>
+               <div class="partnership-diagram">
+                 <div class="partner-box partner"><div class="seat-label">N</div><div class="seat-name">Your partner</div></div>
+                 <div class="partner-box"><div class="seat-label">W</div><div class="seat-name">Opponent</div></div>
+                 <div class="partner-box you"><div class="seat-label">S</div><div class="seat-name">You (South)</div></div>
+                 <div class="partner-box"><div class="seat-label">E</div><div class="seat-name">Opponent</div></div>
+               </div>
+               <p>North–South cooperate against East–West.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'Sharing Tricks',
+        body: `<p>When your partner wins a trick, that trick counts for <em>your side</em>. You both win it together.</p>
+               <p>At the end of the hand, all 13 tricks are shared between the two sides.</p>
+               <div class="info-box">If North–South win 9 tricks, then East–West win 4 tricks (9 + 4 = 13).</div>`,
+      },
+      {
+        type: 'info',
+        heading: 'The Golden Rule',
+        body: `<p>You and your partner are <strong>not allowed to speak about your cards</strong> during the game. You must communicate only through the cards you play and the bids you make.</p>
+               <div class="info-box warn">No secret signals, no winks — honest communication only through bidding and play.</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p08',
+        heading: 'Partnership Quiz',
+        body: 'Test your understanding of how partnerships work.',
+      },
+    ],
+  },
+
+  // ── 7 ─────────────────────────────────────────────────────────────
+  {
+    id: 7, module: 'Counting Points', title: 'High Card Points (HCP)',
+    pages: [
+      {
+        type: 'info',
+        heading: 'Valuing Your Hand',
+        body: `<p>Before you bid, you need to know how strong your hand is. The simplest way is to count <strong>High Card Points (HCP)</strong>.</p>
+               <table style="border-collapse:collapse;margin:.8rem 0">
+                 <tr><td style="padding:6px 16px 6px 0"><strong>Ace (A)</strong></td><td style="padding:6px 0"><strong>= 4 points</strong></td></tr>
+                 <tr><td style="padding:6px 16px 6px 0"><strong>King (K)</strong></td><td style="padding:6px 0"><strong>= 3 points</strong></td></tr>
+                 <tr><td style="padding:6px 16px 6px 0"><strong>Queen (Q)</strong></td><td style="padding:6px 0"><strong>= 2 points</strong></td></tr>
+                 <tr><td style="padding:6px 16px 6px 0"><strong>Jack (J)</strong></td><td style="padding:6px 0"><strong>= 1 point</strong></td></tr>
+               </table>
+               <p>All other cards are worth 0 points.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'The Deck Has 40 Points Total',
+        body: `<p>There are 4 suits, each with A+K+Q+J = 4+3+2+1 = 10 points. So: 4 × 10 = <strong>40 HCP in the whole deck</strong>.</p>
+               <p>On average, each player holds <strong>10 HCP</strong>. A hand with 13 HCP is above average. A hand with 6 HCP is below average.</p>
+               <div class="info-box tip">Partners' combined HCP tells you how many tricks you can likely win together.</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p09',
+        heading: 'Count the Points',
+        body: 'Click each honor card to add its points. See if you get the right total!',
+      },
+    ],
+  },
+
+  // ── 8 ─────────────────────────────────────────────────────────────
+  {
+    id: 8, module: 'Bidding', title: 'What Is Bidding?',
+    pages: [
+      {
+        type: 'info',
+        heading: 'Before the Cards Are Played',
+        body: `<p>Before any card is played, there is an <strong>auction</strong> (also called <em>bidding</em>). Each player takes turns making bids.</p>
+               <p>A bid tells your partner (and opponents) about your hand — specifically, how strong it is and which suits you have.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'What a Bid Looks Like',
+        body: `<p>A bid has two parts: a <strong>number</strong> (1–7) and a <strong>strain</strong> (a suit or No Trumps).</p>
+               <p>Examples: &nbsp;<strong class="bid-black">1♠</strong> &nbsp; <strong class="bid-red">2♥</strong> &nbsp; <strong class="bid-black">3NT</strong></p>
+               <p>The <strong>number</strong> is how many tricks above 6 you promise to win. A bid of <strong>1</strong> means you'll try to win 6+1 = <strong>7 tricks</strong>. A bid of <strong>4</strong> means 6+4 = <strong>10 tricks</strong>.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'The Auction Rules',
+        body: `<p>Players bid in turn (clockwise). Each bid must be <strong>higher</strong> than the last.</p>
+               <p>Bids rank from lowest to highest:</p>
+               <p style="font-size:1.1rem">1♣ &lt; 1♦ &lt; 1♥ &lt; 1♠ &lt; 1NT &lt; 2♣ &lt; 2♦ … &lt; 7NT</p>
+               <p>You can also say <strong>Pass</strong> if you don't want to bid. Three passes in a row ends the auction.</p>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p10',
+        heading: 'Valid or Not?',
+        body: 'Is this bid high enough to be legal?',
+      },
+    ],
+  },
+
+  // ── 9 ─────────────────────────────────────────────────────────────
+  {
+    id: 9, module: 'Bidding', title: 'Opening Bids',
+    pages: [
+      {
+        type: 'info',
+        heading: 'Opening the Bidding',
+        body: `<p>The first player to make a bid (other than Pass) is called the <strong>opener</strong>. To open the bidding you usually need at least <strong>12 HCP</strong>.</p>
+               <div class="info-box">With fewer than 12 HCP, most players pass. With 12 or more, you open.</div>`,
+      },
+      {
+        type: 'info',
+        heading: 'Choosing Your Opening Bid',
+        body: `<p>Common opening bids:</p>
+               <ul>
+                 <li><strong>1 of a suit</strong> — 12–21 HCP, at least 4 cards in that suit (5 for hearts/spades in many systems)</li>
+                 <li><strong>1NT</strong> — 15–17 HCP, balanced hand (no very long or short suits)</li>
+                 <li><strong>2NT</strong> — 20–21 HCP, balanced hand</li>
+               </ul>
+               <p>For now, just remember: <strong>12+ HCP → open 1 of your longest suit.</strong></p>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p11',
+        heading: 'Should You Open?',
+        body: 'Look at this hand. Should you open the bidding, and with what?',
+      },
+    ],
+  },
+
+  // ── 10 ────────────────────────────────────────────────────────────
+  {
+    id: 10, module: 'Bidding', title: 'Responding to Partner',
+    pages: [
+      {
+        type: 'info',
+        heading: 'Your Partner Opened — Now What?',
+        body: `<p>When your partner opens, you <strong>respond</strong> to tell them about your hand.</p>
+               <ul>
+                 <li>With <strong>0–5 HCP</strong>: Pass (your hand is too weak)</li>
+                 <li>With <strong>6–9 HCP</strong>: Make a minimum response (e.g. raise or bid a new suit at the 1-level)</li>
+                 <li>With <strong>10–12 HCP</strong>: Make a stronger response</li>
+                 <li>With <strong>13+ HCP</strong>: Your side almost certainly has enough for game!</li>
+               </ul>`,
+      },
+      {
+        type: 'info',
+        heading: 'Raising Partner\'s Suit',
+        body: `<p>If your partner opens <strong>1♥</strong> and you have <strong>3 or more hearts</strong>, you should <em>raise</em>:</p>
+               <ul>
+                 <li>3-card support + 6–9 HCP → bid <strong>2♥</strong></li>
+                 <li>4-card support + 10–12 HCP → bid <strong>3♥</strong></li>
+                 <li>4-card support + 13+ HCP → bid <strong>4♥</strong> (game!)</li>
+               </ul>
+               <p>Raising says: "I like your suit, partner — let's play there."</p>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p12',
+        heading: 'Choose Your Response',
+        body: 'Partner opened 1♥. What do you respond?',
+      },
+    ],
+  },
+
+  // ── 11 ────────────────────────────────────────────────────────────
+  {
+    id: 11, module: 'The Contract', title: 'The Contract & Declarer',
+    pages: [
+      {
+        type: 'info',
+        heading: 'The Final Contract',
+        body: `<p>When the auction ends (three passes in a row), the <strong>final bid</strong> becomes the <strong>contract</strong>.</p>
+               <p>For example, if the final bid is <strong>4♥</strong>, the contract is 4 Hearts. The declaring side must win 6+4 = <strong>10 tricks</strong> with Hearts as trumps.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'The Declarer and Dummy',
+        body: `<p>The player on the <em>declaring side</em> who first bid the contract's strain is the <strong>declarer</strong>.</p>
+               <p>The declarer's partner is called the <strong>dummy</strong>. After the opening lead, dummy lays their cards face up on the table for everyone to see. Declarer then plays <em>both</em> their own hand and the dummy's hand.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'The Opening Lead',
+        body: `<p>The player to declarer's <strong>left</strong> makes the <strong>opening lead</strong> — the first card played. This happens <em>before</em> dummy is revealed.</p>
+               <div class="info-box tip">Choosing the right opening lead is one of the most important skills in bridge. Good leads can set (defeat) contracts!</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p13',
+        heading: 'Who Is the Declarer?',
+        body: 'Watch the auction unfold and identify the declarer.',
+      },
+    ],
+  },
+
+  // ── 12 ────────────────────────────────────────────────────────────
+  {
+    id: 12, module: 'The Contract', title: 'Playing the Hand',
+    pages: [
+      {
+        type: 'info',
+        heading: 'Playing as Declarer',
+        body: `<p>As declarer, your job is to make your contract — win at least as many tricks as you promised.</p>
+               <p>You have information your opponents don't: you can see <strong>both your hand and dummy's hand</strong>. Plan how the play will go before playing to the first trick.</p>`,
+      },
+      {
+        type: 'info',
+        heading: 'A Simple Plan',
+        body: `<p>Ask yourself:</p>
+               <ol>
+                 <li>How many tricks do I need?</li>
+                 <li>How many tricks can I <em>count</em> as certain wins (top cards)?</li>
+                 <li>Where will the extra tricks come from?</li>
+               </ol>
+               <div class="info-box tip">Common ways to make extra tricks: long suits, trumping losers, finesses.</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p14',
+        heading: 'Play the Hand',
+        body: 'You are South, playing 4♠. Follow the play step by step.',
+      },
+    ],
+  },
+
+  // ── 13 ────────────────────────────────────────────────────────────
+  {
+    id: 13, module: 'Scoring', title: 'Scoring Basics',
+    pages: [
+      {
+        type: 'info',
+        heading: 'Making or Defeating the Contract',
+        body: `<p>The declaring side either <strong>makes</strong> their contract (wins enough tricks) or goes <strong>down</strong> (fails).</p>
+               <ul>
+                 <li><strong>Making the contract</strong> → declaring side scores points</li>
+                 <li><strong>Going down</strong> → defending side scores points (called <em>penalties</em>)</li>
+               </ul>`,
+      },
+      {
+        type: 'info',
+        heading: 'Game and Slam',
+        body: `<p>The biggest bonuses come from <strong>game</strong> contracts:</p>
+               <ul>
+                 <li><strong>3NT, 4♥, 4♠, 5♣, 5♦</strong> → Game! (worth a large bonus)</li>
+               </ul>
+               <p>And <strong>slams</strong> (even bigger!):</p>
+               <ul>
+                 <li><strong>Small slam</strong> = 12 tricks (bid 6 of something)</li>
+                 <li><strong>Grand slam</strong> = all 13 tricks (bid 7 of something)</li>
+               </ul>`,
+      },
+      {
+        type: 'info',
+        heading: 'The Goal of Bidding',
+        body: `<p>Now it all ties together: bidding is about finding the <strong>highest contract you can make</strong>.</p>
+               <p>If your side has enough HCP for game, you want to reach a game contract. If you have enough for a slam, bid the slam.</p>
+               <div class="info-box tip"><strong>Rule of thumb:</strong> 25 combined HCP → aim for game. 33 combined HCP → aim for small slam. 37 combined HCP → try for grand slam.</div>`,
+      },
+      {
+        type: 'puzzle', puzzleId: 'p15',
+        heading: 'Scoring Quiz',
+        body: 'Answer this question about how scoring works.',
+      },
+    ],
+  },
+];
+
+// ════════════════════════════════════════════════════════════════════
+// PUZZLE DATA
+// ════════════════════════════════════════════════════════════════════
+const PUZZLES = {
+  // ── Type A: Multiple choice ──────────────────────────────────────
+  p01: {
+    id: 'p01', type: 'A', relatedLesson: 1,
+    title: 'How many suits are in a deck?',
+    prompt: 'A standard deck used in bridge has how many suits?',
+    options: ['Two', 'Three', 'Four', 'Five'],
+    correct: 2,
+    explanation: 'A standard deck has four suits: Spades (♠), Hearts (♥), Diamonds (♦), and Clubs (♣). Each suit has 13 cards, for a total of 52.',
+  },
+  p04: {
+    id: 'p04', type: 'B', relatedLesson: 3,
+    title: 'Who wins the trick?',
+    prompt: 'No trumps. North led ♠. Click the card that wins this trick.',
+    hand: [
+      {rank:'7', suit:'S'},
+      {rank:'K', suit:'S'},
+      {rank:'3', suit:'S'},
+      {rank:'9', suit:'S'},
+    ],
+    labels: ['N (led)', 'E', 'S', 'W'],
+    correct: 1,
+    explanation: 'East played the King of Spades — the highest spade. In a no-trump situation, the highest card in the suit led wins the trick.',
+  },
+  p05: {
+    id: 'p05', type: 'A', relatedLesson: 4,
+    title: 'Following suit question',
+    prompt: 'A Diamond is led. You hold: ♦9 ♦3 ♠K ♠7 ♥A. What must you do?',
+    options: [
+      'You must play a Diamond',
+      'You may play any card you like',
+      'You must play your highest card',
+      'You must play a Spade',
+    ],
+    correct: 0,
+    explanation: 'You have Diamonds in your hand (♦9 and ♦3), so you must follow suit and play one of them. You cannot play a Spade or Heart until you have no Diamonds left.',
+  },
+  p08: {
+    id: 'p08', type: 'A', relatedLesson: 6,
+    title: 'Partnership quiz',
+    prompt: 'North–South win 9 tricks. How many tricks did East–West win?',
+    options: ['3 tricks', '4 tricks', '5 tricks', '6 tricks'],
+    correct: 1,
+    explanation: 'All 13 tricks must be shared between the two sides. 13 − 9 = 4. East–West won 4 tricks.',
+  },
+  p10: {
+    id: 'p10', type: 'A', relatedLesson: 8,
+    title: 'Is this bid legal?',
+    prompt: 'The last bid was 2♥. Can you bid 2♦ now?',
+    options: [
+      'Yes — 2♦ is a legal bid',
+      'No — 2♦ is lower than 2♥ so it\'s not allowed',
+    ],
+    correct: 1,
+    explanation: 'Bids must always be higher than the last bid. 2♦ ranks below 2♥ in bridge, so it would be illegal. You would need to bid at least 2♠, 2NT, or anything higher.',
+  },
+  p15: {
+    id: 'p15', type: 'A', relatedLesson: 13,
+    title: 'Scoring quiz',
+    prompt: 'Your side bid 4♥ and won exactly 10 tricks. What happens?',
+    options: [
+      'You made your contract and score points',
+      'You went down — 10 tricks isn\'t enough',
+      'You need 13 tricks to make 4♥',
+      'The contract is cancelled',
+    ],
+    correct: 0,
+    explanation: '4♥ requires 6 + 4 = 10 tricks. You won exactly 10, so you made your contract. Well done! Your side scores the game bonus.',
+  },
+
+  // ── Type B: Click a card ─────────────────────────────────────────
+  p03: {
+    id: 'p03', type: 'B', relatedLesson: 2,
+    title: 'Which card wins?',
+    prompt: 'All Spades. Click the card that beats the others.',
+    hand: [
+      {rank:'J', suit:'S'},
+      {rank:'5', suit:'S'},
+      {rank:'A', suit:'S'},
+      {rank:'Q', suit:'S'},
+    ],
+    labels: ['Option 1','Option 2','Option 3','Option 4'],
+    correct: 2,
+    explanation: 'The Ace (A) is always the highest card within a suit. A♠ beats J♠, Q♠, and 5♠.',
+  },
+  p06: {
+    id: 'p06', type: 'B', relatedLesson: 4,
+    title: 'Follow suit — pick the right card',
+    prompt: 'A Heart (♥) is led. Your hand is shown below. Click the card you MUST play.',
+    hand: [
+      {rank:'K', suit:'S'},
+      {rank:'8', suit:'H'},
+      {rank:'A', suit:'D'},
+      {rank:'3', suit:'H'},
+    ],
+    labels: ['K♠','8♥','A♦','3♥'],
+    multipleCorrect: [1, 3],
+    explanation: 'A Heart was led, so you must play a Heart. You have two hearts: 8♥ and 3♥. Either one is correct — you just have to follow suit.',
+  },
+  p07: {
+    id: 'p07', type: 'B', relatedLesson: 5,
+    title: 'Who wins with trumps?',
+    prompt: 'Spades (♠) are trumps. Hearts were led. Click the winning card.',
+    hand: [
+      {rank:'A', suit:'H'},
+      {rank:'K', suit:'H'},
+      {rank:'2', suit:'S'},
+      {rank:'9', suit:'H'},
+    ],
+    labels: ['N: A♥','E: K♥','S: 2♠','W: 9♥'],
+    correct: 2,
+    explanation: 'Spades are trumps! South played the 2♠ — a trump card. Even though it\'s the lowest trump, it beats the A♥, K♥, and 9♥ because trumps always beat non-trumps.',
+  },
+  p11: {
+    id: 'p11', type: 'B', relatedLesson: 9,
+    title: 'Open or pass?',
+    prompt: 'Your hand has 14 HCP with 5 Spades. What should you do?',
+    hand: [
+      {rank:'A', suit:'S'},
+      {rank:'K', suit:'S'},
+      {rank:'J', suit:'S'},
+      {rank:'7', suit:'S'},
+      {rank:'5', suit:'S'},
+    ],
+    labels: ['Open 1♠','Pass','Open 2♠','Open 1NT'],
+    correct: 0,
+    explanation: '14 HCP is well above the 12-point minimum to open. With 5 Spades, you open 1♠. You\'re telling partner: "I have an opening hand with spades."',
+  },
+
+  // ── Type C: HCP counting ─────────────────────────────────────────
+  p09: {
+    id: 'p09', type: 'C', relatedLesson: 7,
+    title: 'Count the HCP',
+    prompt: 'Click each honor card (A, K, Q, J) to add its points. Then check your total.',
+    hand: [
+      {rank:'A', suit:'S'},
+      {rank:'K', suit:'H'},
+      {rank:'7', suit:'H'},
+      {rank:'Q', suit:'D'},
+      {rank:'3', suit:'D'},
+      {rank:'J', suit:'C'},
+      {rank:'9', suit:'C'},
+      {rank:'4', suit:'C'},
+    ],
+    correctHCP: 10,
+    explanation: 'A=4, K=3, Q=2, J=1. Total: 4+3+2+1 = 10 HCP. The 7, 3, 9, and 4 are worth 0 points each.',
+  },
+
+  // ── Type D: Order cards ──────────────────────────────────────────
+  p02: {
+    id: 'p02', type: 'D', relatedLesson: 2,
+    title: 'Order the cards low → high',
+    prompt: 'Click the cards in order from LOWEST to HIGHEST.',
+    hand: [
+      {rank:'Q', suit:'S'},
+      {rank:'5', suit:'S'},
+      {rank:'A', suit:'S'},
+      {rank:'J', suit:'S'},
+      {rank:'8', suit:'S'},
+    ],
+    correctOrder: [1, 4, 0, 3, 2], // indices: 5, 8, Q, J, A
+    explanation: 'From lowest to highest: 5 → 8 → Q → J? Wait — J (11) is higher than Q (12)? No: Q=12, J=11. Correct order: 5 (2nd) → 8 (3rd) → J (11) → Q (12) → A (14).',
+  },
+
+  // ── Type E: Bid entry ────────────────────────────────────────────
+  p12: {
+    id: 'p12', type: 'E', relatedLesson: 10,
+    title: 'Respond to 1♥',
+    prompt: 'Partner opened 1♥. You hold: ♥K ♥7 ♥4 ♠A ♠8 ♦Q ♦3 ♣J ♣6 ♣2 + more small cards. You have 10 HCP and 3 hearts. What do you bid?',
+    hand: [
+      {rank:'K', suit:'H'}, {rank:'7', suit:'H'}, {rank:'4', suit:'H'},
+      {rank:'A', suit:'S'}, {rank:'8', suit:'S'},
+      {rank:'Q', suit:'D'}, {rank:'3', suit:'D'},
+      {rank:'J', suit:'C'}, {rank:'6', suit:'C'}, {rank:'2', suit:'C'},
+    ],
+    correctLevel: 3,
+    correctStrain: 'H',
+    explanation: 'With 10–12 HCP and 3-card heart support, you raise to 3♥. This says: "Partner, I like hearts and I have a medium-strength hand." Partner can then decide whether to bid game (4♥) or stop.',
+  },
+
+  // ── Type F: Sequential reveal ────────────────────────────────────
+  p13: {
+    id: 'p13', type: 'F', relatedLesson: 11,
+    title: 'Follow the auction',
+    prompt: 'Watch the auction. Who becomes the declarer?',
+    steps: [
+      { text: 'South opens: <strong class="bid-red">1♥</strong>', note: 'South is the first to bid Hearts.' },
+      { text: 'West passes.', note: '' },
+      { text: 'North responds: <strong class="bid-red">3♥</strong>', note: 'North raises hearts.' },
+      { text: 'East passes. South bids: <strong class="bid-red">4♥</strong>', note: 'South accepts game.' },
+      { text: 'All pass. Final contract: <strong class="bid-red">4♥</strong>', note: 'Three passes end the auction.' },
+    ],
+    question: 'Who is the declarer?',
+    options: ['North', 'South', 'East', 'West'],
+    correct: 1,
+    explanation: 'South was the first player on the North–South side to bid Hearts. So South is the declarer in the 4♥ contract. North will be dummy, laying cards face up on the table.',
+  },
+  p14: {
+    id: 'p14', type: 'F', relatedLesson: 12,
+    title: 'Play step by step',
+    prompt: 'You are South, declarer in 4♠. You need 10 tricks. Follow the play.',
+    steps: [
+      { text: 'West leads ♥K. Dummy (North) is revealed with ♠AQJ, ♥32, ♦AKQ, ♣765.', note: 'You (South) have ♠K10987, ♥A54, ♦432, ♣AK.' },
+      { text: 'You win with ♥A from your hand.', note: 'You have the Ace — take it right away!' },
+      { text: 'You lead ♠K from hand. Everyone follows with small spades. You win.', note: 'Drawing trumps — taking out opponents\' trump cards.' },
+      { text: 'You cross to dummy\'s ♠A. You lead ♠Q — all follow. Trumps are out!', note: 'Opponents had only 3 trumps total. Trumps are now exhausted.' },
+      { text: 'Now run dummy\'s diamond winners: ♦A, ♦K, ♦Q. Three tricks. You pitch heart losers from hand.', note: 'Discarding losers on dummy\'s long suit.' },
+      { text: 'Claim your club tricks: ♣A, ♣K. Then your remaining trumps score the last tricks.', note: 'You made 4♠ with an overtrick!' },
+    ],
+    question: 'You made your contract. How many tricks did you win?',
+    options: ['8 tricks', '10 tricks', '11 tricks', '13 tricks'],
+    correct: 2,
+    explanation: '1 (♥A) + 3 (♠ tricks) + 3 (♦ tricks) + 2 (♣ tricks) + 2 (remaining ♠) = 11 tricks. You made 4♠ with one overtrick!',
+  },
+};
+
+// Fix p02 correctOrder — indices of correct low→high ordering
+PUZZLES.p02.correctOrder = [1, 4, 0, 3, 2]; // 5♠=idx1, 8♠=idx4, J♠=idx3? Let me recheck:
+// hand = [Q,5,A,J,8] → indices 0=Q,1=5,2=A,3=J,4=8
+// low→high: 5(1), 8(4), J(3), Q(0), A(2)
+PUZZLES.p02.correctOrder = [1, 4, 3, 0, 2];
+
+// ════════════════════════════════════════════════════════════════════
+// PROGRESS
+// ════════════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'bridge_progress';
+let progress = { completedLessons: [], lastLesson: null };
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) progress = JSON.parse(raw);
+  } catch(e) {}
+}
+
+function saveProgress() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch(e) {}
+}
+
+function markLessonComplete(id) {
+  if (!progress.completedLessons.includes(id)) {
+    progress.completedLessons.push(id);
+    saveProgress();
+  }
+}
+
+function isLessonComplete(id) { return progress.completedLessons.includes(id); }
+function isLessonUnlocked(id) { return id === 1 || progress.completedLessons.includes(id - 1); }
+
+// ════════════════════════════════════════════════════════════════════
+// APP STATE
+// ════════════════════════════════════════════════════════════════════
+const APP = { view: 'home', lessonId: null, pageIndex: 0, puzzleId: null, puzzleState: {} };
+
+// ════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  APP.view = id;
+
+  const nav = document.getElementById('nav');
+  if (id === 'home') {
+    nav.classList.remove('visible');
+    renderHome();
+  } else {
+    nav.classList.add('visible');
+    updateNavProgress();
+    if (id === 'lessons') renderLessonList();
+  }
+  window.scrollTo(0, 0);
+}
+
+function updateNavProgress() {
+  document.getElementById('nav-progress').textContent =
+    progress.completedLessons.length + ' / 13 complete';
+}
+
+// ════════════════════════════════════════════════════════════════════
+// HOME
+// ════════════════════════════════════════════════════════════════════
+function renderHome() {
+  const done = progress.completedLessons.length;
+  const pct  = Math.round(done / 13 * 100);
+  document.getElementById('home-progress-fill').style.width = pct + '%';
+  document.getElementById('home-progress-label').textContent = done + ' of 13 lessons complete';
+  const btn = document.getElementById('btn-continue');
+  if (progress.lastLesson) {
+    btn.style.display = '';
+    const l = LESSONS.find(l => l.id === progress.lastLesson);
+    btn.textContent = 'Continue: Lesson ' + progress.lastLesson + (l ? ' — ' + l.title : '');
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function handleStart() { showView('lessons'); }
+
+function handleContinue() {
+  if (progress.lastLesson) openLesson(progress.lastLesson);
+  else showView('lessons');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// LESSON LIST
+// ════════════════════════════════════════════════════════════════════
+function renderLessonList() {
+  const container = document.getElementById('lesson-list');
+  // Group by module
+  const modules = [];
+  const modMap   = {};
+  LESSONS.forEach(l => {
+    if (!modMap[l.module]) { modMap[l.module] = []; modules.push(l.module); }
+    modMap[l.module].push(l);
+  });
+
+  let html = '';
+  modules.forEach(mod => {
+    html += `<div class="module-group"><div class="module-heading">${mod}</div>`;
+    modMap[mod].forEach(l => {
+      const done     = isLessonComplete(l.id);
+      const unlocked = isLessonUnlocked(l.id);
+      const cls      = done ? 'done' : (!unlocked ? 'locked' : '');
+      const onclick  = unlocked ? `onclick="openLesson(${l.id})"` : '';
+      html += `<div class="lesson-row ${cls}" ${onclick}>
+        <span class="lesson-num">${l.id}.</span>
+        <span class="lesson-title-text">${l.title}</span>
+        ${done ? '<span class="check-icon">✓</span>' : (!unlocked ? '<span class="lock-icon">🔒</span>' : '')}
+      </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// LESSON ENGINE
+// ════════════════════════════════════════════════════════════════════
+function openLesson(id) {
+  APP.lessonId  = id;
+  APP.pageIndex = 0;
+  progress.lastLesson = id;
+  saveProgress();
+  showView('lesson');
+  renderLessonPage();
+}
+
+function renderLessonPage() {
+  const lesson = LESSONS.find(l => l.id === APP.lessonId);
+  if (!lesson) return;
+  const page = lesson.pages[APP.pageIndex];
+  const total = lesson.pages.length;
+
+  document.getElementById('lesson-module-label').textContent = lesson.module;
+  document.getElementById('lesson-title-el').textContent     = lesson.title;
+  document.getElementById('page-indicator').textContent      =
+    'Page ' + (APP.pageIndex + 1) + ' of ' + total;
+
+  document.getElementById('btn-prev').disabled = (APP.pageIndex === 0);
+
+  const isLast = APP.pageIndex === total - 1;
+  const nextBtn = document.getElementById('btn-next');
+
+  if (page.type === 'puzzle') {
+    const puzzle = PUZZLES[page.puzzleId];
+    nextBtn.textContent  = isLast ? 'Finish Lesson' : 'Next →';
+    nextBtn.disabled     = true; // enabled after puzzle answered
+    renderInlinePuzzle(puzzle, page, isLast);
+  } else {
+    nextBtn.textContent = isLast ? 'Finish Lesson' : 'Next →';
+    nextBtn.disabled    = false;
+    const content = document.getElementById('page-content');
+    content.innerHTML   = `
+      <div class="page-heading">${page.heading}</div>
+      <div class="page-body">${page.body || ''}</div>
+      ${page.visual ? `<div class="page-visual">${page.visual}</div>` : ''}
+    `;
+  }
+}
+
+function renderInlinePuzzle(puzzle, page, isLastPage) {
+  const content = document.getElementById('page-content');
+  content.innerHTML = `
+    <div class="page-heading">${page.heading}</div>
+    <div class="page-body" style="margin-bottom:.8rem">${page.body || ''}</div>
+    <div id="inline-puzzle-area"></div>
+  `;
+  const area = document.getElementById('inline-puzzle-area');
+  renderPuzzle(puzzle, area, (correct, explanation) => {
+    // Enable Next after answering
+    document.getElementById('btn-next').disabled = false;
+    if (correct && isLastPage) {
+      markLessonComplete(APP.lessonId);
+    }
+  });
+}
+
+function nextPage() {
+  const lesson = LESSONS.find(l => l.id === APP.lessonId);
+  if (!lesson) return;
+  if (APP.pageIndex < lesson.pages.length - 1) {
+    APP.pageIndex++;
+    renderLessonPage();
+  } else {
+    // Last page — complete lesson
+    markLessonComplete(APP.lessonId);
+    // Go back to lesson list, showing completion
+    showView('lessons');
+  }
+}
+
+function prevPage() {
+  if (APP.pageIndex > 0) {
+    APP.pageIndex--;
+    renderLessonPage();
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// PUZZLE RENDERERS
+// ════════════════════════════════════════════════════════════════════
+function renderPuzzle(puzzle, container, onAnswered) {
+  switch (puzzle.type) {
+    case 'A': renderTypeA(puzzle, container, onAnswered); break;
+    case 'B': renderTypeB(puzzle, container, onAnswered); break;
+    case 'C': renderTypeC(puzzle, container, onAnswered); break;
+    case 'D': renderTypeD(puzzle, container, onAnswered); break;
+    case 'E': renderTypeE(puzzle, container, onAnswered); break;
+    case 'F': renderTypeF(puzzle, container, onAnswered); break;
+  }
+}
+
+// ── Type A: Multiple Choice ──────────────────────────────────────
+function renderTypeA(puzzle, container, onAnswered) {
+  let answered = false;
+  const opts = puzzle.options.map((opt, i) =>
+    `<button class="quiz-option" id="qa-opt-${i}" onclick="selectA(${i})">${opt}</button>`
+  ).join('');
+  container.innerHTML = `<div class="quiz-options">${opts}</div><div id="qa-feedback"></div>`;
+
+  window.selectA = function(i) {
+    if (answered) return;
+    answered = true;
+    const correct = i === puzzle.correct;
+    puzzle.options.forEach((_, j) => {
+      const btn = document.getElementById('qa-opt-' + j);
+      btn.disabled = true;
+      if (j === puzzle.correct) btn.classList.add('correct-answer');
+      if (j === i && !correct)  btn.classList.add('wrong-answer');
+    });
+    const fb = document.getElementById('qa-feedback');
+    fb.className = 'quiz-feedback ' + (correct ? 'correct' : 'wrong');
+    fb.innerHTML = (correct ? '✓ Correct! ' : '✗ Not quite. ') + puzzle.explanation;
+    onAnswered(correct, puzzle.explanation);
+  };
+}
+
+// ── Type B: Click a card ─────────────────────────────────────────
+function renderTypeB(puzzle, container, onAnswered) {
+  let answered = false;
+  const labels = puzzle.labels || [];
+  const isMulti = Array.isArray(puzzle.multipleCorrect);
+
+  let html = '<div class="hand" style="gap:10px">';
+  puzzle.hand.forEach((card, i) => {
+    const label = labels[i] ? `<div class="hand-label">${labels[i]}</div>` : '';
+    html += `<div style="text-align:center">
+      ${label}
+      ${renderCard(card, { id: 'tb-card-' + i, onclick: `selectB(${i})` })}
+    </div>`;
+  });
+  html += '</div><div id="tb-feedback"></div>';
+  container.innerHTML = html;
+
+  window.selectB = function(i) {
+    if (answered) return;
+    answered = true;
+    let correct;
+    if (isMulti) {
+      correct = puzzle.multipleCorrect.includes(i);
+    } else {
+      correct = i === puzzle.correct;
+    }
+    // mark cards
+    puzzle.hand.forEach((_, j) => {
+      const el = document.getElementById('tb-card-' + j);
+      if (!el) return;
+      el.onclick = null;
+      el.classList.remove('card');
+      // Re-render state
+      const isCorrectCard = isMulti ? puzzle.multipleCorrect.includes(j) : j === puzzle.correct;
+      if (isCorrectCard) el.classList.add('correct');
+      if (j === i && !isCorrectCard) el.classList.add('wrong');
+    });
+    const fb = document.getElementById('tb-feedback');
+    fb.className = 'quiz-feedback ' + (correct ? 'correct' : 'wrong');
+    fb.innerHTML = (correct ? '✓ Correct! ' : '✗ Not quite. ') + puzzle.explanation;
+    onAnswered(correct, puzzle.explanation);
+  };
+}
+
+// ── Type C: HCP Counting ─────────────────────────────────────────
+function renderTypeC(puzzle, container, onAnswered) {
+  let total = 0;
+  let clicked = new Set();
+  let finished = false;
+
+  function renderC() {
+    let html = `<div class="hcp-area">
+      <div class="hcp-hint">Click each honor (A, K, Q, J) to count its points:</div>
+      <div class="hand" style="gap:10px">`;
+    puzzle.hand.forEach((card, i) => {
+      const pts  = HCP_TABLE[card.rank] || 0;
+      const done = clicked.has(i);
+      const opts = {
+        id: 'tc-card-' + i,
+        onclick: pts > 0 && !done ? `selectC(${i})` : null,
+        noHover: pts === 0 || done,
+        correct: done && pts > 0,
+      };
+      html += `<div style="text-align:center">
+        ${renderCard(card, opts)}
+        <div style="font-size:.85rem;color:#888;margin-top:3px">${done ? '+' + pts : (pts > 0 ? '?' : '0')}</div>
+      </div>`;
+    });
+    html += `</div>
+      <div class="hcp-score-display">Total: ${total} HCP</div>`;
+
+    // Show submit if all honors clicked
+    const allHonors = puzzle.hand.every((c, i) => !HCP_TABLE[c.rank] || clicked.has(i));
+    if (allHonors && !finished) {
+      html += `<button class="btn-primary btn-sm" onclick="submitC()">Check My Total</button>`;
+    }
+    if (finished) {
+      html += `<div id="tc-feedback"></div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+
+    if (finished) {
+      const correct = total === puzzle.correctHCP;
+      const fb = document.getElementById('tc-feedback');
+      fb.className = 'quiz-feedback ' + (correct ? 'correct' : 'wrong');
+      fb.innerHTML = (correct ? '✓ Correct! ' : '✗ Not quite. ') + puzzle.explanation;
+    }
+  }
+
+  window.selectC = function(i) {
+    if (finished || clicked.has(i)) return;
+    const pts = HCP_TABLE[puzzle.hand[i].rank] || 0;
+    if (pts > 0) { clicked.add(i); total += pts; }
+    renderC();
+  };
+
+  window.submitC = function() {
+    finished = true;
+    renderC();
+    onAnswered(total === puzzle.correctHCP, puzzle.explanation);
+  };
+
+  renderC();
+}
+
+// ── Type D: Order cards ──────────────────────────────────────────
+function renderTypeD(puzzle, container, onAnswered) {
+  let order = [];
+  let finished = false;
+
+  function renderD() {
+    let html = `<div style="margin-bottom:.5rem;font-size:.95rem;color:#555">
+      Click cards from <strong>LOWEST</strong> to <strong>HIGHEST</strong>. (${order.length} of ${puzzle.hand.length} selected)
+    </div><div class="hand" style="gap:10px">`;
+    puzzle.hand.forEach((card, i) => {
+      const pos  = order.indexOf(i);
+      const done = pos !== -1;
+      let extra  = '';
+      if (finished) {
+        extra = puzzle.correctOrder[pos] === i || (done && puzzle.correctOrder.indexOf(i) === pos) ? 'correct' : '';
+      }
+      html += `<div style="text-align:center;position:relative">
+        ${renderCard(card, { id: 'td-card-' + i, onclick: !done && !finished ? `selectD(${i})` : null, noHover: done || finished, correct: finished && done })}
+        ${done ? `<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#2c5f8a;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:bold">${pos + 1}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+
+    if (order.length === puzzle.hand.length && !finished) {
+      html += `<button class="btn-primary btn-sm" style="margin-top:.5rem" onclick="submitD()">Check Order</button>`;
+    }
+    if (finished) {
+      html += `<div id="td-feedback"></div>`;
+    }
+    container.innerHTML = html;
+    if (finished) {
+      const correct = JSON.stringify(order) === JSON.stringify(puzzle.correctOrder);
+      const fb = document.getElementById('td-feedback');
+      fb.className = 'quiz-feedback ' + (correct ? 'correct' : 'wrong');
+      fb.innerHTML = (correct ? '✓ Correct! ' : '✗ Not quite. ') + puzzle.explanation;
+    }
+  }
+
+  window.selectD = function(i) {
+    if (finished || order.includes(i)) return;
+    order.push(i);
+    renderD();
+  };
+
+  window.submitD = function() {
+    finished = true;
+    renderD();
+    const correct = JSON.stringify(order) === JSON.stringify(puzzle.correctOrder);
+    onAnswered(correct, puzzle.explanation);
+  };
+
+  renderD();
+}
+
+// ── Type E: Bid entry ────────────────────────────────────────────
+function renderTypeE(puzzle, container, onAnswered) {
+  let chosenLevel  = null;
+  let chosenStrain = null;
+  let submitted    = false;
+
+  const strains = ['C','D','H','S','NT'];
+  const levels  = [1,2,3,4,5,6,7];
+
+  function strainDisplay(s) {
+    const sym = STRAIN_SYM[s];
+    const cls = STRAIN_CLS[s];
+    return `<span class="${cls}">${sym}</span>`;
+  }
+
+  function renderE() {
+    // Show hand if provided
+    let handHtml = '';
+    if (puzzle.hand) {
+      handHtml = `<div class="hand" style="gap:6px;margin:.5rem 0">
+        ${puzzle.hand.map(c => renderCard(c, {sm: true, noHover: true})).join('')}
+      </div>`;
+    }
+
+    let html = handHtml + `<div class="bid-widget" style="flex-direction:column;gap:.8rem;align-items:flex-start">
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:.95rem;color:#555">Level:</span>
+        ${levels.map(l => `<button class="btn-outline btn-sm" style="${chosenLevel===l?'background:#2c5f8a;color:#fff':''}" onclick="setLevel(${l})">${l}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.95rem;color:#555">Strain:</span>
+        ${strains.map(s => `<button class="btn-outline btn-sm" style="${chosenStrain===s?'background:#2c5f8a;color:#fff':''}" onclick="setStrain('${s}')">${strainDisplay(s)}</button>`).join('')}
+      </div>`;
+
+    if (chosenLevel && chosenStrain) {
+      const sym = STRAIN_SYM[chosenStrain];
+      const cls = STRAIN_CLS[chosenStrain];
+      html += `<div style="font-size:1.2rem">Your bid: <strong class="${cls}">${chosenLevel}${sym}</strong></div>`;
+      if (!submitted) {
+        html += `<button class="btn-primary btn-sm" onclick="submitE()">Submit Bid</button>`;
+      }
+    }
+
+    if (submitted) html += `<div id="te-feedback"></div>`;
+    html += '</div>';
+    container.innerHTML = html;
+
+    if (submitted) {
+      const correct = chosenLevel === puzzle.correctLevel && chosenStrain === puzzle.correctStrain;
+      const fb = document.getElementById('te-feedback');
+      fb.className = 'quiz-feedback ' + (correct ? 'correct' : 'wrong');
+      fb.innerHTML = (correct ? '✓ Correct! ' : '✗ Not quite. ') + puzzle.explanation;
+    }
+  }
+
+  window.setLevel  = function(l) { if (!submitted) { chosenLevel  = l; renderE(); } };
+  window.setStrain = function(s) { if (!submitted) { chosenStrain = s; renderE(); } };
+  window.submitE   = function() {
+    if (!chosenLevel || !chosenStrain || submitted) return;
+    submitted = true;
+    renderE();
+    const correct = chosenLevel === puzzle.correctLevel && chosenStrain === puzzle.correctStrain;
+    onAnswered(correct, puzzle.explanation);
+  };
+
+  renderE();
+}
+
+// ── Type F: Sequential reveal ────────────────────────────────────
+function renderTypeF(puzzle, container, onAnswered) {
+  let step     = 0;
+  let answered = false;
+
+  function renderF() {
+    let stepsHtml = '<div class="step-log">';
+    for (let i = 0; i <= step && i < puzzle.steps.length; i++) {
+      const s   = puzzle.steps[i];
+      const cls = i === step ? 'step-item highlight' : 'step-item';
+      stepsHtml += `<div class="${cls}">${s.text}${s.note ? `<div style="font-size:.9rem;color:#666;margin-top:2px">${s.note}</div>` : ''}</div>`;
+    }
+    stepsHtml += '</div>';
+
+    let html = stepsHtml;
+    if (step < puzzle.steps.length - 1) {
+      html += `<button class="btn-primary btn-sm" onclick="stepF()">Next Step →</button>`;
+    } else if (!answered) {
+      // Show question
+      html += `<div style="margin-top:1rem;font-weight:bold;font-size:1.05rem">${puzzle.question}</div>`;
+      html += `<div class="quiz-options" style="margin-top:.6rem">`;
+      puzzle.options.forEach((opt, i) => {
+        html += `<button class="quiz-option" id="tf-opt-${i}" onclick="selectF(${i})">${opt}</button>`;
+      });
+      html += '</div><div id="tf-feedback"></div>';
+    } else {
+      html += `<div id="tf-feedback"></div>`;
+    }
+    container.innerHTML = html;
+    if (answered) {
+      // Re-render feedback
+      renderFeedback();
+    }
+  }
+
+  function renderFeedback() {
+    const fb = document.getElementById('tf-feedback');
+    if (fb) {
+      fb.className = 'quiz-feedback correct';
+      fb.innerHTML = '✓ ' + puzzle.explanation;
+    }
+  }
+
+  window.stepF   = function() { if (step < puzzle.steps.length - 1) { step++; renderF(); } };
+  window.selectF = function(i) {
+    if (answered) return;
+    answered = true;
+    const correct = i === puzzle.correct;
+    puzzle.options.forEach((_, j) => {
+      const btn = document.getElementById('tf-opt-' + j);
+      if (!btn) return;
+      btn.disabled = true;
+      if (j === puzzle.correct) btn.classList.add('correct-answer');
+      if (j === i && !correct)  btn.classList.add('wrong-answer');
+    });
+    setTimeout(() => {
+      const fb = document.getElementById('tf-feedback');
+      if (fb) {
+        fb.className = 'quiz-feedback ' + (correct ? 'correct' : 'wrong');
+        fb.innerHTML = (correct ? '✓ Correct! ' : '✗ Not quite. ') + puzzle.explanation;
+      }
+    }, 50);
+    onAnswered(correct, puzzle.explanation);
+  };
+
+  renderF();
+}
+
+// ════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════
+loadProgress();
+renderHome();
+</script>
+</body>
+</html>
